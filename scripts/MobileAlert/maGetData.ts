@@ -6,7 +6,7 @@
 //
 
 const fetch = require('node-fetch');
-const maDeviceID = require('../../../iobroker-data/include/credentials.ts'); // Device ID not published (delete it)
+const maDeviceID = require('../../../iobroker-data/include/credentials.ts'); //My  Device ID, not published
 
 const mobileAlertsPath = '0_userdata.0.mobileAlerts.Devices.';  //Datenpunkte werden in diesem Pfad erzeugt.
 const apiURL = 'https://www.data199.com/api/pv1/device/lastmeasurement';
@@ -37,7 +37,7 @@ let propertyArray = [
 { id: "0301548CBC4A", name: "Sample Sensor Berlin", data: measurement02 },
 { id: '08004EA0B619', name: 'Sample Rainsensor', data: measurement08 }];
 */
-let propertyArray = [{ id: maDeviceID, name: 'Regensensor', data: measurement08 }];               // delete this
+let propertyArray = [{ id: maDeviceID, name: 'Regensensor', data: measurement08 }];  // delete this or change id
 
 // If the rain flag (rb) = true but the flipcounter value does not change anymore, this counter is 
 // incremented to the maximum value before the rain flag is set to false again. 
@@ -85,7 +85,7 @@ async function doPostRequest(): Promise<string | null> {
     });
     return (await response.json());
   } catch (error) {
-    console.log('Message Allerts request error: ' + error, error);
+    console.log('Mobile Alerts request error: ' + error, error);
   }
   return null;
 }
