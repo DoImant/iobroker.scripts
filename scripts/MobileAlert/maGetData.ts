@@ -85,7 +85,7 @@ async function doPostRequest(): Promise<string | null> {
     });
     return (await response.json());
   } catch (error) {
-    console.log('Mobile Alerts request error: ' + error, error);
+    console.log('Mobile Alerts request: ' + error, error);
   }
   return null;
 }
@@ -130,12 +130,13 @@ async function getData() {
     data = JSON.stringify(data).replace(/'/g, '"');
     let obj = JSON.parse(data);
     if (obj.success == true) {
-      obj.devices.forEach(function (item: { [x: string]: { [x: string]: number; }; deviceid: any; } ) {
+      obj.devices.forEach(function (item: any) {
+       // log(item.measurement.sc);
         let props = propertiesById.get(item.deviceid);
         for (var [key, subitem] of props.data) {
-          let value = checkDefined(item['measurement'][key], subitem.type);
+          let value = checkDefined(item.measurement[key], subitem.type);
           subitem.active === true && setState(mobileAlertsPath + item.deviceid + "." + key, value, true);
-          key === 'rf' && checkForRain(item.deviceid, item['measurement'][key]); // check flipcounter if key is = 'rf'
+          key === 'rf' && checkForRain(item.deviceid, item.measurement[key]); // check flipcounter if key is = 'rf'
         };
       });
     } else {
