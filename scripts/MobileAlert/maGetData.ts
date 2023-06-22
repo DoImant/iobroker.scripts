@@ -6,7 +6,7 @@
 //
 
 const fetch = require('node-fetch');
-const maDeviceID = require('../../../iobroker-data/include/credentials.ts'); //My  Device ID, not published
+const maDeviceID: string = require('../../../iobroker-data/include/credentials.ts'); //My  Device ID, not published
 
 const mobileAlertsPath = '0_userdata.0.mobileAlerts.Devices.';  //Datenpunkte werden in diesem Pfad erzeugt.
 const apiURL = 'https://www.data199.com/api/pv1/device/lastmeasurement';
@@ -34,7 +34,7 @@ const measurement08 = new Map([
 // Here the name and the data structure to be used are defined for each device Id.
 /* uncomment this
 let propertyArray = [
-{ id: "0301548CBC4A", name: "Sample Sensor Berlin", data: measurement02 },
+{ id: '0301548CBC4A', name: 'Sample Sensor Berlin', data: measurement02 },
 { id: '08004EA0B619', name: 'Sample Rainsensor', data: measurement08 }];
 */
 let propertyArray = [{ id: maDeviceID, name: 'Regensensor', data: measurement08 }];  // delete this or change id
@@ -100,7 +100,7 @@ function checkDefined(value: number | boolean, dataType: string) {
   return value;
 }
 
-function checkForRain(deviceid: number, rfVal: number) {
+function checkForRain(deviceid: string, rfVal: number) {
   const rfID = mobileAlertsPath + deviceid + '.rf';
   const lrfID = rfID.replace(/\.rf$/, '.lrf');
   const rbID = rfID.replace(/\.rf$/, '.rb');
@@ -130,7 +130,7 @@ async function getData() {
     data = JSON.stringify(data).replace(/'/g, '"');
     let obj = JSON.parse(data);
     if (obj.success == true) {
-      obj.devices.forEach(function (item: { [x: string]: { [x: string]: any; }; deviceid: any; }) {
+      obj.devices.forEach(function (item: { [x: string]: { [x: string]: number; }; deviceid: any; } ) {
         let props = propertiesById.get(item.deviceid);
         for (var [key, subitem] of props.data) {
           let value = checkDefined(item['measurement'][key], subitem.type);
