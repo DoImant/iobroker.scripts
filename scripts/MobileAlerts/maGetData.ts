@@ -17,19 +17,20 @@ const phoneId = '';
 
 /* uncomment this
 const measurement02 = new Map([
-  ["t1", { active: true, name: "Temperatur", type: "number", role: 'value', unit: "°C", iValue: 0 }],
-  ["ts", { active: true, name: "Timestamp", type: "number", role: 'value', unit: "sec", iValue: 0 }],
-  ["lb", { active: true, name: "Low Battery", type: "boolean", role: 'state', unit: "", iValue: false }]]);
+  ["t1", { maItem: true, name: "Temperatur", type: "number", role: 'value', unit: "°C", iValue: 0 }],
+  ["ts", { maItem: true, name: "Timestamp", type: "number", role: 'value', unit: "sec", iValue: 0 }],
+  ["lb", { maItem: true, name: "Low Battery", type: "boolean", role: 'state', unit: "", iValue: false }]]);
 */
 
-// Data points with the value active = false are not updated by the getData() function.
+// Data points with the value maItem = false are not updated by the getData() function.
 const measurement08 = new Map([
-  ['t1', { active: true, name: 'Temperatur', type: 'number', role: 'value', unit: '', iValue: 0 }],
-  ['r', { active: true, name: 'Regenmenge', type: 'number', role: 'value', unit: '', iValue: 0 }],
-  ['rf', { active: true, name: 'Zaehler Wippe', type: 'number', role: 'value', unit: '', iValue: 0 }],
-  ['lrf', { active: false, name: 'Vgl. Wert Wippe', type: 'number', role: 'value', unit: '', iValue: 0 }],
-  ['rb', { active: false, name: 'Regenalarm', type: 'boolean', role: 'state', unit: '', iValue: false }],
-  ['lb', { active: true, name: 'Batterie leer', type: 'boolean', role: 'state', unit: '', iValue: false }]]);
+  ['t1', { maItem: true, name: 'Temperatur', type: 'number', role: 'value', unit: '', iValue: 0 }],
+  ['r', { maItem: true, name: 'Regenmenge gesamt', type: 'number', role: 'value', unit: '', iValue: 0 }],
+  ['rf', { maItem: true, name: 'Zaehler Wippe', type: 'number', role: 'value', unit: '', iValue: 0 }],
+  ['lrf', { maItem: false, name: 'Vgl. Wert Wippe', type: 'number', role: 'value', unit: '', iValue: 0 }],
+  ['rsd', { maItem: false, name: 'Regenmenge pro Abfrage', type: 'number', role: 'value', unit: '', iValue: 0 }],
+  ['rb', { maItem: false, name: 'Regenalarm', type: 'boolean', role: 'state', unit: '', iValue: false }],
+  ['lb', { maItem: true, name: 'Batterie leer', type: 'boolean', role: 'state', unit: '', iValue: false }]]);
 
 // Here the name and the data structure to be used are defined for each device Id.
 /* uncomment this
@@ -101,17 +102,24 @@ function checkDefined(value: number | boolean, dataType: string) {
 }
 
 function checkForRain(deviceid: string, rfVal: number) {
-  const rfID = mobileAlertsPath + deviceid + '.rf';
-  const lrfID = rfID.replace(/\.rf$/, '.lrf');
-  const rbID = rfID.replace(/\.rf$/, '.rb');
+  const basePath = mobileAlertsPath + deviceid;
+  const lrfID = basePath + '.lrf';
+  const rbID = basePath + '.rb';
+  const rsdID = basePath + '.rsd';
+  const rr: number = 0.258;
+
+  if (!rfVal) { setState(lrfID, rfVal, true); return; }   // If rfVal = 0, this value was reset and it doesn't rain. 
+
   let itIsRaining = getState(rbID).val;
+  let lrfVal = getState(lrfID).val;
+  let rfDiff = rfVal - lrfVal;  // no rain if result is zero.
+  let r = rfDiff * rr;          // Rainfall amount since last data request.
 
-  if (!rfVal) { setState(lrfID, rfVal, true); return; } // If rfVal = 0, this value was reset and it doesn't rain. 
-
-  if (rfVal != getState(lrfID).val) {  // if the flipcounter is not equal to the stored counter, it must be raining.
+  if (rfDiff) {   // if the flipcounter is not equal to the stored counter, it must be raining.
     log('Es regnet!');
     rainTrueResetCounter = 0;
     setState(lrfID, rfVal, true);
+    setState(rsdID, r, true);
     itIsRaining === false && setState(rbID, true, true);   // setState if first expression is true 
   } else if (itIsRaining === true) {
     ++rainTrueResetCounter;
@@ -131,11 +139,10 @@ async function getData() {
     let obj = JSON.parse(data);
     if (obj.success == true) {
       obj.devices.forEach(function (item: any) {
-       // log(item.measurement.sc);
         let props = propertiesById.get(item.deviceid);
         for (var [key, subitem] of props.data) {
           let value = checkDefined(item.measurement[key], subitem.type);
-          subitem.active === true && setState(mobileAlertsPath + item.deviceid + "." + key, value, true);
+          subitem.maItem === true && setState(mobileAlertsPath + item.deviceid + "." + key, value, true);
           key === 'rf' && checkForRain(item.deviceid, item.measurement[key]); // check flipcounter if key is = 'rf'
         };
       });
