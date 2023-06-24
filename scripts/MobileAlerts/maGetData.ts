@@ -4,8 +4,9 @@
 //
 // 17.06.2023 Initial version
 //
-
+// @ts-ignore
 const fetch = require('node-fetch');
+// @ts-ignore
 const maDeviceID: string = require('../../../iobroker-data/include/credentials.ts'); //My  Device ID, not published
 
 const mobileAlertsPath = '0_userdata.0.mobileAlerts.Devices.';  //Datenpunkte werden in diesem Pfad erzeugt.
@@ -108,7 +109,10 @@ function checkForRain(deviceid: string, rfVal: number) {
   const rsdID = basePath + '.rsd';
   const rr: number = 0.258;
 
-  if (!rfVal) { setState(lrfID, rfVal, true); return; }   // If rfVal = 0, this value was reset and it doesn't rain. 
+  if (!rfVal) {   // If rfVal = 0, this value was reset and it doesn't rain.
+    setState(lrfID, rfVal, true);
+    return;
+  }
 
   let itIsRaining = getState(rbID).val;
   let lrfVal = getState(lrfID).val;
