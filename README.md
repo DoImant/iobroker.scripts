@@ -6,3 +6,6 @@ Data retrieval of the rain gauge is done via the [Mobile Alerts REST API](https:
 
 The code for the SensEgg sensor and the serial gateway to ioBroker can be found here:
 [Code for SensEgg Sensor and receiver (serial gateway)](https://github.com/DoImant/Arduino-SensEgg-Light).
+
+Display of three SensEgg sensors using ioBroker VIS.
+![Screenshot ioBroker VIS](https://github.com/DoImant/Stuff/blob/main/SensEgg-Light/sensEgg-VIS.jpg?raw=true)
