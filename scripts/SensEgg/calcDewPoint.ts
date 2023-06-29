@@ -95,7 +95,7 @@ function calAbsHumidity(t: number, r: number): number {
 // ioBroker 
 //
 function calcDewPoint(tpId: string, index: number): void {
-  const devBaseString = '0_userdata.0.sensEgg.Device.';  
+  const devBaseString = '0_userdata.0.sensEgg.Devices.';  
   const myRegEx = new RegExp("^.*(\\d{3})");
   let rgxResult = myRegEx.exec(tpId);
   if (rgxResult) {
@@ -117,6 +117,6 @@ function calcDewPoint(tpId: string, index: number): void {
 // Schedule every 10 minutes for all sensors
 schedule('*/10 * * * *', () => {
   // Determine all temperature sensor IDs    
-  $('state[id=0_userdata.0.sensEgg.Device.*.ntcT]').each(calcDewPoint);
+  $('state[id=0_userdata.0.sensEgg.Devices.*.ntcT]').each(calcDewPoint);
 });
 

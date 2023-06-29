@@ -10,7 +10,7 @@
 // At midnight, set the min/max settings to the current temperature values
 //
 function resetMinMaxT(id: string, i: number): void {
-  const devBaseString = '0_userdata.0.sensEgg.Device.';
+  const devBaseString = '0_userdata.0.sensEgg.Devices.';
   // Templatestring for all max, min IDs
   const myRegEx = new RegExp("^.*(\\d{3})");
   let rgxResult = myRegEx.exec(id);   // crop sensorID number from id
@@ -48,7 +48,7 @@ function resetRainfall() {
 
 schedule('0 0 * * *', () => {
   // Determine all temperature sensor IDs    
-  $('state[id=0_userdata.0.sensEgg.Device.*.ntcT]').each(resetMinMaxT);
+  $('state[id=0_userdata.0.sensEgg.Devices.*.ntcT]').each(resetMinMaxT);
 
   // Reset time information.
   resetSunRiseInfo();

@@ -6,7 +6,7 @@
 // 18.06.2023 initiale Version
 //
 
-const sensEggPath = '0_userdata.0.sensEgg.Device.';  //Datenpunkte werden in diesem Pfad erzeugt.
+const sensEggPath = '0_userdata.0.sensEgg.Devices.';  //Datenpunkte werden in diesem Pfad erzeugt.
 
 const dataPoints = new Map([
   ['T', { name: 'Temperatur', type: 'number', role: 'value', iValue: 0, unit: '' }],
@@ -24,14 +24,14 @@ const dataPoints = new Map([
   ['aaH', { name: 'Absolute Luftfeuchte', type: 'number', role: 'value', iValue: 0, unit: '' }]]);
 
 // Hier werden für jede Geräte-Id der Name und die zu benötigten Datenpunkte festgelegt.
-let propertyArray = [{ id: '201', name: 'Sensor Garten', data: dataPoints },
+let sePropertyArray = [{ id: '201', name: 'Sensor Garten', data: dataPoints },
 { id: '202', name: 'Sensor Wohnbereich', data: dataPoints },
 { id: '203', name: 'Sensor Arbeitszimmer', data: dataPoints }];
 
 //
 // Anlegen der Datenpunkte in ioBroker
 //
-propertyArray.forEach(function (item) {
+sePropertyArray.forEach(function (item) {
   item.data.forEach(function (subitem: any, key) {
     let id = sensEggPath + item.id + '.' + key;
     //console.log(id);

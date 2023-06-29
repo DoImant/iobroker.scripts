@@ -8,10 +8,10 @@
 
 // import { setSensIDState } from "../global/helper/setSensIDState";
 
-on({ id: /^0_userdata\.0\.sensEgg\.Device\.\d{3}\.ntcT$/, change: "ne" }, checkTemperature);
+on({ id: /^0_userdata\.0\.sensEgg\.Devices\.\d{3}\.ntcT$/, change: "ne" }, checkTemperature);
 
 function checkTemperature(obj: any): void {
-  const devBaseString: string = '0_userdata.0.sensEgg.Device.';
+  const devBaseString: string = '0_userdata.0.sensEgg.Devices.';
   const myRegEx = new RegExp("^.*(\\d{3})");
 
   let rgxResult = myRegEx.exec(obj.id);

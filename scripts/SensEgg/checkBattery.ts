@@ -7,10 +7,10 @@
 // 03.06.2023 Initiale Version
 // 18.06.2023 An neue Datenpunktstruktur für die SensEgg Sensoren angepasst
 //
-on({ id: /^0_userdata\.0\.sensEgg\.Device.\d{3}\.btVcc$/, change: "ne" }, checkBattery);
+on({ id: /^0_userdata\.0\.sensEgg\.Devices.\d{3}\.btVcc$/, change: "ne" }, checkBattery);
 
 function checkBattery(obj: any): void {
-  const devBaseString = '0_userdata.0.sensEgg.Device.'; 
+  const devBaseString = '0_userdata.0.sensEgg.Devices.'; 
   const myRegEx = new RegExp("^.*(\\d{3})");
 
   let rgxResult = myRegEx.exec(obj.id);

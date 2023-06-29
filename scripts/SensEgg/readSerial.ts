@@ -44,7 +44,7 @@ onStop(function () {
 
 // Parse string and change received data to an object.
 function parseData(receivedData: string): void {
-  const idFirstPart = '0_userdata.0.sensEgg.Device.';
+  const idFirstPart = '0_userdata.0.sensEgg.Devices.';
   const idSecondPart: any = {
     BME_T: '.T',
     BME_H: '.raH',

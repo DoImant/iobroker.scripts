@@ -151,7 +151,7 @@ async function getData() {
         };
       });
     } else {
-      log('Mobile Alerts: (2) Received object contains error "' + obj.errorcode + '": ' + obj.errormessage);
+      log('Mobile Alerts: Received object contains error "' + obj.errorcode + '": ' + obj.errormessage);
     }
   };
 };
