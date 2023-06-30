@@ -9,3 +9,11 @@ The code for the SensEgg sensor and the serial gateway to ioBroker can be found 
 
 Display of three SensEgg sensors using ioBroker VIS.
 ![Screenshot ioBroker VIS](https://github.com/DoImant/Stuff/blob/main/SensEgg-Light/sensEgg-VIS.jpg?raw=true)
+
+To access the Mobile Alerts REST API, the module node-fetch is used, which must be installed for use with ioBroker. With the following instructions this can be done via a terminal:
+
+```
+cd /opt/iobroker/node_modules
+sudo npm install node-fetch@2 --unsafe-perm
+chown -R iobroker:iobroker node-fetch
+```
