@@ -11,6 +11,9 @@ cd /opt/iobroker/node_modules
 sudo npm install node-fetch@2 --unsafe-perm
 chown -R iobroker:iobroker node-fetch
 ```
+In order for the newly installed module to be recognized, the Javascript instance must be restarted: 
+
+`iobroker restart javascript.0`
 
 The code for the SensEgg sensor and the serial gateway to ioBroker can be found here:
 [Code for SensEgg Sensor and receiver (serial gateway)](https://github.com/DoImant/Arduino-SensEgg-Light).
