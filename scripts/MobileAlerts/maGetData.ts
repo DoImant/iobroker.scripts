@@ -3,6 +3,8 @@
 // to store in ioBroker.
 //
 // 17.06.2023 Initial version
+// 05.07.2023 Object-ID rst (rain sum total per day) added.
+//            Log output changed
 //
 // @ts-ignore
 const fetch = require('node-fetch');
@@ -30,6 +32,7 @@ const measurement08 = new Map([
   ['rf', { maItem: true, name: 'Zaehler Wippe', type: 'number', role: 'value', unit: '', iValue: 0 }],
   ['lrf', { maItem: false, name: 'Vgl. Wert Wippe', type: 'number', role: 'value', unit: '', iValue: 0 }],
   ['rsd', { maItem: false, name: 'Regenmenge pro Abfrage', type: 'number', role: 'value', unit: '', iValue: 0 }],
+  ['rst', { maItem: false, name: 'Regenmenge pro Tag', type: 'number', role: 'value', unit: '', iValue: 0 }],
   ['rb', { maItem: false, name: 'Regenalarm', type: 'boolean', role: 'state', unit: '', iValue: false }],
   ['lb', { maItem: true, name: 'Batterie leer', type: 'boolean', role: 'state', unit: '', iValue: false }]]);
 
@@ -127,8 +130,9 @@ function checkForRain(deviceid: string, rfVal: number) {
     itIsRaining === false && setState(rbID, true, true);   // setState if first expression is true 
   } else if (itIsRaining === true) {
     ++rainTrueResetCounter;
-    log('Es regnet nicht mehr (' + rainTrueResetCounter + '/' + maxRainTrueResetCounter + ')');
+    log('Teste auf Regenende (' + rainTrueResetCounter + '/' + maxRainTrueResetCounter + ')');
     if (rainTrueResetCounter >= maxRainTrueResetCounter) {
+      log('Es regnet nicht mehr');
       rainTrueResetCounter = 0;
       setState(rbID, false, true);
     }

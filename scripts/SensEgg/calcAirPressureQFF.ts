@@ -8,7 +8,7 @@
 ///////////////////////////////////////////////
 // Konstanten
 ///////////////////////////////////////////////
-const HOEHE = 134;     // Höhe des Sensors in Meter über NN
+const HOEHE = 132;     // Höhe des Sensors in Meter über NN
 const TEMPERATURE_ID = 'alias.0.klima.garten.temperatur';
 const AIRPRESSUREQFE_ID = 'alias.0.klima.garten.luftdruck';
 const AIRPRESSUREQFF_ID = '0_userdata.0.Var.luftdruck.QFF';
