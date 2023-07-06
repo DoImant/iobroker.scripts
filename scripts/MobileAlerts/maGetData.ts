@@ -146,7 +146,7 @@ sendPoMessage();
  * The function sends a message using the Pushover service if the remaining limit is available.
  * @param {any} msgObj - The `msgObj` parameter is an object that contains the data for the message that you want to send
  * to the Pushover service. If the pushover service is not installed or the message limit is exceeded, 
- * nothing will be executed.
+ * nothing will be executed. 
  */
 async function sendPoMessage(msgObj: any = poMessageData) {
   const poID = 'pushover.0.app.remainingLimit';
