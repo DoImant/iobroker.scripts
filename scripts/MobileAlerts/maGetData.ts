@@ -5,11 +5,15 @@
 // 17.06.2023 Initial version
 // 05.07.2023 Object-ID rst (rain sum total per day) added.
 //            Log output changed
+// 06.07.2023 refactoring of doPostRequest() and getData()
+//            Experimental:
+//            added a function to send push messages via pushover service (If the service is not installed,
+//            the send request will be ignored) 
 //
 // @ts-ignore
 const fetch = require('node-fetch');
 // @ts-ignore
-const maDeviceID: string = require('../../../iobroker-data/include/credentials.ts'); //My  Device ID, not published
+const maDeviceID: string = require('/opt/iobroker/iobroker-data/include/credentials.ts'); //My  Device ID, not published
 
 const mobileAlertsPath = '0_userdata.0.mobileAlerts.Devices.';  //Datenpunkte werden in diesem Pfad erzeugt.
 const apiURL = 'https://www.data199.com/api/pv1/device/lastmeasurement';
@@ -17,6 +21,21 @@ const apiURL = 'https://www.data199.com/api/pv1/device/lastmeasurement';
 // Example Device ID  -> deviceids=0E7EA4A71203,09265A8A3503&phoneid=880071013613
 // The phoneid must be specified if alarms configured in the app are also to be delivered
 const phoneId = '';
+
+// If the rain flag (rb) = true but the flip counter value does not change anymore, this counter is 
+// incremented to the maximum value before the rain flag is set to false again. 
+let rainTrueResetCounter = 0;
+// Maximum counter value
+// With a query interval of the API of two minutes, the reset occurs after maxRainTrueResetCounter * 2 minutes  
+const maxRainTrueResetCounter = 5;
+
+// Pushover Message object
+// https://github.com/ioBroker/ioBroker.pushover/blob/master/docs/de/README.md
+// Adjust the values to your environment
+const poMessageData = {
+  message: '', title: 'Mobile Alerts', sound: 'pushover',
+  file: '/opt/iobroker/iobroker-data/include/img/umbrella-64.png'
+}
 
 /* uncomment this
 const measurement02 = new Map([
@@ -42,15 +61,11 @@ let propertyArray = [
 { id: '0301548CBC4A', name: 'Sample Sensor Berlin', data: measurement02 },
 { id: '08004EA0B619', name: 'Sample Rainsensor', data: measurement08 }];
 */
-let propertyArray = [{ id: maDeviceID, name: 'Regensensor', data: measurement08 }];  // delete this or change id
+let propertyArray = [{ id: maDeviceID, name: 'Regensensor', data: measurement08 }];
 
-// If the rain flag (rb) = true but the flipcounter value does not change anymore, this counter is 
-// incremented to the maximum value before the rain flag is set to false again. 
-let rainTrueResetCounter = 0;
-// Maximum counter value
-// With a query interval of the API of two minutes, the reset occurs after maxRainTrueResetCounter * 2 minutes  
-const maxRainTrueResetCounter = 5;
-
+/* This code block is creating a string called `deviceIdString` which will contain all the device IDs from the
+`propertyArray`. It also creates a `propertiesById` map to store the properties of each device ID. 
+The deviceidString is needed for the API query to retrieve the data for all sensors stored in the propertyArray. */
 let deviceIdString = '';
 var propertiesById = new Map();
 propertyArray.forEach(function (item) {
@@ -62,6 +77,10 @@ deviceIdString = deviceIdString.substring(0, deviceIdString.length - 1);  // Rem
 let body = 'deviceids=' + deviceIdString;
 if (phoneId) { body += '&phoneid=' + phoneId; }
 
+
+/* This code block is iterating over each item in the `propertyArray` array. For each item, it then iterates over the
+`data` property of that item. If the corresponding objects do not yet exist in the iobroker object database, 
+they will be created.*/
 propertyArray.forEach(function (item) {
   item.data.forEach(function (subitem: any, key) {
     let id = mobileAlertsPath + item.id + '.' + key;
@@ -81,6 +100,11 @@ propertyArray.forEach(function (item) {
   });
 });
 
+/**
+ * This  function is an asynchronous function that sends a POST request to an API URL and returns the response as a
+ * string.
+ * @returns a Promise that resolves to a string.
+ */
 async function doPostRequest(): Promise<string> {
   let result = '';
   try {
@@ -96,6 +120,14 @@ async function doPostRequest(): Promise<string> {
   return result;
 }
 
+/**
+ * The function checks if a value is defined and returns a default value based on the data type if it is undefined.
+ * @param {number | boolean} value - The value parameter can be either a number or a boolean.
+ * @param {string} dataType - The `dataType` parameter is a string that specifies the type of the `value` parameter. It can
+ * be either `'number'` or `'boolean'`.
+ * @returns the value that was passed in, unless it is undefined. If the value is undefined, the function will set it to a
+ * default value based on the dataType parameter and then return the updated value.
+ */
 function checkDefined(value: number | boolean, dataType: string) {
   if (value === undefined) {
     switch (dataType) {
@@ -106,6 +138,29 @@ function checkDefined(value: number | boolean, dataType: string) {
   return value;
 }
 
+/**
+ * The function sends a message to the Pushover service if the remaining limit state exists and is true.
+ * @param {string} msgText - A string that represents the message text to be sent.
+ * @param {any} msgObj - The `messageData` parameter is an object that contains additional data for the message. It
+ * can include properties such as the recipient's user key, device name, priority, sound, and other options specific 
+ * to the Pushover service. If the pushover service is not installed or the message limit is exceeded, 
+ * nothing will be executed.  
+ */
+async function sendPoMessage(msgText: string = "no text", msgObj: any = poMessageData) {
+  const poID = 'pushover.0.app.remainingLimit';
+  if (existsObject(poID) && getState(poID).val) {
+    msgObj.message = msgText;
+    sendTo('pushover', msgObj);
+  }
+}
+
+/**
+ * The function `checkForRain` checks if it is raining based on the flip count value (rf) and updates 
+ * the state accordingly.
+ * @param {string} deviceid - A string representing the unique identifier of the device.
+ * @param {number} rfVal - The parameter `rfVal` represents the current flip count value.
+ * @returns The function does not explicitly return a value.
+ */
 function checkForRain(deviceid: string, rfVal: number) {
   const basePath = mobileAlertsPath + deviceid;
   const lrfID = basePath + '.lrf';
@@ -129,6 +184,7 @@ function checkForRain(deviceid: string, rfVal: number) {
     setState(lrfID, rfVal, true);
     setState(rsdID, r, true);
     itIsRaining === false && setState(rbID, true, true);   // setState if first expression is true 
+    sendPoMessage('Es ist am regen...');
   } else if (itIsRaining === true) {
     ++rainTrueResetCounter;
     log('Tests for rain end (' + rainTrueResetCounter + '/' + maxRainTrueResetCounter + ')');
@@ -136,10 +192,15 @@ function checkForRain(deviceid: string, rfVal: number) {
       log('It no longer rains');
       rainTrueResetCounter = 0;
       setState(rbID, false, true);
+      sendPoMessage('Es regnet nicht mehr...');
     }
   }
 }
 
+/**
+ * This TypeScript function uses a POST request to retrieve data from the Mobile Alerts server and update 
+ * the data in the ioBroker object database. If it is data from a rain sensor, it will check if it is raining.
+ */
 async function getData() {
   const data = await doPostRequest();
   // log(data);
@@ -161,5 +222,10 @@ async function getData() {
     log('Mobile Alerts: Requested data string is empty!', 'warn');
   }
 };
+
+/* The  following line is scheduling the `getData` function to run every 2 minutes.  `schedule` is a 
+built-in function in ioBroker that allows you to schedule the execution of a function at specific intervals or times. 
+In this case, the `getData` function will be called every 2 minutes to retrieve data from the Mobile Alerts server 
+and update the data in the ioBroker object database. */
 
 schedule('*/2 * * * *', getData);
