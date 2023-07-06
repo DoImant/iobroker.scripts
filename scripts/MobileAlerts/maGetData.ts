@@ -29,9 +29,9 @@ let rainTrueResetCounter = 0;
 // With a query interval of the API of two minutes, the reset occurs after maxRainTrueResetCounter * 2 minutes  
 const maxRainTrueResetCounter = 5;
 
-// Pushover Message object
+// Pushover Message interface
 // https://github.com/ioBroker/ioBroker.pushover/blob/master/docs/de/README.md
-// Adjust the values to your environment
+// Adjust the poFilePath to your environment
 const poFilePath = '/opt/iobroker/iobroker-data/include/img/';
 interface PushoverMessage {
   message: string;
