@@ -81,18 +81,19 @@ propertyArray.forEach(function (item) {
   });
 });
 
-async function doPostRequest(): Promise<string | null> {
+async function doPostRequest(): Promise<string> {
+  let result = '';
   try {
     const response = await fetch(apiURL, {
       method: 'post',
       body: body,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
-    return (await response.json());
+    result = await response.text();
   } catch (error) {
-    console.log('Mobile Alerts request: ' + error, error);
+    log('Mobile Alerts request: ' + error, 'error');
   }
-  return null;
+  return result;
 }
 
 function checkDefined(value: number | boolean, dataType: string) {
@@ -123,16 +124,16 @@ function checkForRain(deviceid: string, rfVal: number) {
   let r = rfDiff * rr;          // Rainfall amount since last data request.
 
   if (rfDiff) {   // if the flipcounter is not equal to the stored counter, it must be raining.
-    log('Es regnet!');
+    log('It\'s raining!');
     rainTrueResetCounter = 0;
     setState(lrfID, rfVal, true);
     setState(rsdID, r, true);
     itIsRaining === false && setState(rbID, true, true);   // setState if first expression is true 
   } else if (itIsRaining === true) {
     ++rainTrueResetCounter;
-    log('Teste auf Regenende (' + rainTrueResetCounter + '/' + maxRainTrueResetCounter + ')');
+    log('Tests for rain end (' + rainTrueResetCounter + '/' + maxRainTrueResetCounter + ')');
     if (rainTrueResetCounter >= maxRainTrueResetCounter) {
-      log('Es regnet nicht mehr');
+      log('It no longer rains');
       rainTrueResetCounter = 0;
       setState(rbID, false, true);
     }
@@ -140,11 +141,10 @@ function checkForRain(deviceid: string, rfVal: number) {
 }
 
 async function getData() {
-  let data = await doPostRequest();
+  const data = await doPostRequest();
   // log(data);
   if (data) {
-    data = JSON.stringify(data).replace(/'/g, '"');
-    let obj = JSON.parse(data);
+    const obj = JSON.parse(data);
     if (obj.success == true) {
       obj.devices.forEach(function (item: any) {
         let props = propertiesById.get(item.deviceid);
@@ -152,12 +152,14 @@ async function getData() {
           let value = checkDefined(item.measurement[key], subitem.type);
           subitem.maItem === true && setState(mobileAlertsPath + item.deviceid + "." + key, value, true);
           key === 'rf' && checkForRain(item.deviceid, item.measurement[key]); // check flipcounter if key is = 'rf'
-        };
+        }
       });
     } else {
-      log('Mobile Alerts: Received object contains error "' + obj.errorcode + '": ' + obj.errormessage);
+      log('Mobile Alerts: Received object contains error "' + obj.errorcode + '": ' + obj.errormessage, 'error');
     }
-  };
+  } else {
+    log('Mobile Alerts: Requested data string is empty!', 'warn');
+  }
 };
 
 schedule('*/2 * * * *', getData);
