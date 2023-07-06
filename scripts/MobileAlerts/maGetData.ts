@@ -32,9 +32,10 @@ const maxRainTrueResetCounter = 5;
 // Pushover Message object
 // https://github.com/ioBroker/ioBroker.pushover/blob/master/docs/de/README.md
 // Adjust the values to your environment
+const poFilePath = '/opt/iobroker/iobroker-data/include/img/';
 const poMessageData = {
   message: '', title: 'Mobile Alerts', sound: 'pushover',
-  file: '/opt/iobroker/iobroker-data/include/img/umbrella-64.png'
+  file: poFilePath + 'umbrella-64.png'
 }
 
 /* uncomment this
@@ -138,6 +139,9 @@ function checkDefined(value: number | boolean, dataType: string) {
   return value;
 }
 
+poMessageData.message = 'Es regnet nicht mehr...';
+poMessageData.file = poFilePath + 'sunshine-64.png';
+sendPoMessage();
 /**
  * The function sends a message to the Pushover service if the remaining limit state exists and is true.
  * @param {string} msgText - A string that represents the message text to be sent.
@@ -146,10 +150,9 @@ function checkDefined(value: number | boolean, dataType: string) {
  * to the Pushover service. If the pushover service is not installed or the message limit is exceeded, 
  * nothing will be executed.  
  */
-async function sendPoMessage(msgText: string = "no text", msgObj: any = poMessageData) {
+async function sendPoMessage(msgObj: any = poMessageData) {
   const poID = 'pushover.0.app.remainingLimit';
   if (existsObject(poID) && getState(poID).val) {
-    msgObj.message = msgText;
     sendTo('pushover', msgObj);
   }
 }
@@ -184,7 +187,9 @@ function checkForRain(deviceid: string, rfVal: number) {
     setState(lrfID, rfVal, true);
     setState(rsdID, r, true);
     itIsRaining === false && setState(rbID, true, true);   // setState if first expression is true 
-    sendPoMessage('Es ist am regen...');
+    poMessageData.message = 'Es ist am regnen...';
+    poMessageData.file = poFilePath + 'umbrella-64.png';
+    sendPoMessage();
   } else if (itIsRaining === true) {
     ++rainTrueResetCounter;
     log('Tests for rain end (' + rainTrueResetCounter + '/' + maxRainTrueResetCounter + ')');
@@ -192,7 +197,9 @@ function checkForRain(deviceid: string, rfVal: number) {
       log('It no longer rains');
       rainTrueResetCounter = 0;
       setState(rbID, false, true);
-      sendPoMessage('Es regnet nicht mehr...');
+      poMessageData.message = 'Es regnet nicht mehr...';
+      poMessageData.file = poFilePath + 'sunshine-64.png';
+      sendPoMessage();
     }
   }
 }
