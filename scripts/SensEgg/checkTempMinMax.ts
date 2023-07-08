@@ -24,14 +24,14 @@ function checkTemperature(obj: any): void {
     // store the new value as maximum
     if (obj.state.val > tMaxVal) {
       let tsMaxID = devBaseString + rgxResult[1] + '.tsMax'
-      setSensIDState(tMaxID, obj.state.val, 'value', true);
-      setSensIDState(tsMaxID, obj.state.ts, 'value.time', true);
+      setState(tMaxID, obj.state.val, true);
+      setState(tsMaxID, obj.state.ts, true);
     } else if (obj.state.val < tMinVal) {
       // If the measured temperature is < than the currently saved minimum value, 
       // save the new value as minimum
       let tsMinID = devBaseString + rgxResult[1] + '.tsMin'
-      setSensIDState(tMinID, obj.state.val, 'value', true);
-      setSensIDState(tsMinID, obj.state.ts, 'value.time', true);
+      setState(tMinID, obj.state.val, true);
+      setState(tsMinID, obj.state.ts, true);
     }
   }
 } 

@@ -106,8 +106,8 @@ function calcDewPoint(tpId: string, index: number): void {
     let dewPoint = roundTo(calcRHtoDP(getState(tpId).val, getState(rhId).val), 2);
     let absHumidity = roundTo(calAbsHumidity(getState(tpId).val, getState(rhId).val), 2);
     // console.log("ID: " + dpId + "Taupunkt: " + dewPoint);
-    setSensIDState(dpId, dewPoint, 'value', true);
-    setSensIDState(ahId, absHumidity, 'value', true);
+    setState(dpId, dewPoint, true);
+    setState(ahId, absHumidity, true);
   }
 }
 

@@ -9,6 +9,7 @@
 //            Experimental:
 //            added a function to send push messages via pushover service (If the service is not installed,
 //            the send request will be ignored) 
+// 08.07.2023 Removed the sendPoMessage function and moved it to a typescript file in the global scope of ioBroker-JS.
 //
 // @ts-ignore
 const fetch = require('node-fetch');
@@ -29,16 +30,8 @@ let rainTrueResetCounter = 0;
 // With a query interval of the API of two minutes, the reset occurs after maxRainTrueResetCounter * 2 minutes  
 const maxRainTrueResetCounter = 5;
 
-// Pushover Message interface
-// https://github.com/ioBroker/ioBroker.pushover/blob/master/docs/de/README.md
-// Adjust the poFilePath to your environment
-const poFilePath = '/opt/iobroker/iobroker-data/include/img/';
-interface PushoverMessage {
-  message: string;
-  title: string;
-  sound?: string;
-  file?: string;
-}
+// Adjust the imgFilePath to your environment
+const imgFilePath = '/opt/iobroker/iobroker-data/include/img/';
 
 /* uncomment this
 const measurement02 = new Map([
@@ -141,19 +134,6 @@ function checkDefined(value: number | boolean, dataType: string) {
 }
 
 /**
- * The function sends a message using the Pushover service if the remaining limit is available.
- * @param {any} msgObj - The `msgObj` parameter is an object that contains the data for the message that you want to send
- * to the Pushover service. If the pushover service is not installed or the message limit is exceeded, 
- * nothing will be executed. 
- */
-async function sendPoMessage(msgObj: PushoverMessage) {
-  const poID = 'pushover.0.app.remainingLimit';
-  if (existsObject(poID) && getState(poID).val) {
-    sendTo('pushover', msgObj);
-  }
-}
-
-/**
  * The function `checkForRain` checks if it is raining based on the flip count value (rf) and updates 
  * the state accordingly.
  * @param {string} deviceid - A string representing the unique identifier of the device.
@@ -185,7 +165,7 @@ function checkForRain(deviceid: string, rfVal: number) {
     itIsRaining === false && setState(rbID, true, true);   // setState if first expression is true 
     sendPoMessage({
       message: 'Es ist am regnen...', title: 'Mobile Alerts', sound: 'pushover',
-      file: poFilePath + 'umbrella-64.png'
+      file: imgFilePath + 'umbrella-64.png'
     });
   } else if (itIsRaining === true) {
     ++rainTrueResetCounter;
@@ -196,7 +176,7 @@ function checkForRain(deviceid: string, rfVal: number) {
       setState(rbID, false, true);
       sendPoMessage({
         message: 'Es regnet nicht mehr...', title: 'Mobile Alerts', sound: 'pushover',
-        file: poFilePath + 'sunshine-64.png'
+        file: imgFilePath + 'sunshine-64.png'
       });
     }
   }
