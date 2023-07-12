@@ -4,6 +4,7 @@
 // 03.06.2023 Initial version
 // 18.06.2023 Adapted to new data point structure for SensEgg sensors
 // 24.06.2023 Script renamed and some functions merged into this script. 
+// 09.07.2023 resetRainfall() id changed from rsd to rst.
 //
 
 //
@@ -41,8 +42,9 @@ function resetSunRiseInfo(): void {
 // Reset rainfall amount every midnight.
 //
 function resetRainfall() {
-  $('state[id=0_userdata.0.mobileAlerts.Devices.*.rsd]').each((id: string) => {
-    setState(id, 0, true);
+  $('state[id=0_userdata.0.mobileAlerts.Devices.*.rst]').each((id: string) => {
+    // reset rsd value only when it is not raining
+    !getState(id.replace(/rst$/g, 'rb')).val && setState(id, 0, true);
   });
 }
 

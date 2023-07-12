@@ -10,6 +10,7 @@
 //            added a function to send push messages via pushover service (If the service is not installed,
 //            the send request will be ignored) 
 // 08.07.2023 Removed the sendPoMessage function and moved it to a typescript file in the global scope of ioBroker-JS.
+// 09.07.2023 Revised the way the daily rainfall amount is determined and stored.
 //
 // @ts-ignore
 const fetch = require('node-fetch');
@@ -23,15 +24,17 @@ const apiURL = 'https://www.data199.com/api/pv1/device/lastmeasurement';
 // The phoneid must be specified if alarms configured in the app are also to be delivered
 const phoneId = '';
 
+let isNewStarted = true; //Status variable for a test whether this script has just been restarted.
+
 // If the rain flag (rb) = true but the flip counter value does not change anymore, this counter is 
 // incremented to the maximum value before the rain flag is set to false again. 
 let rainTrueResetCounter = 0;
+
 // Maximum counter value
 // With a query interval of the API of two minutes, the reset occurs after maxRainTrueResetCounter * 2 minutes  
 const maxRainTrueResetCounter = 5;
-
-// Adjust the imgFilePath to your environment
-const imgFilePath = '/opt/iobroker/iobroker-data/include/img/';
+const rafc = 0.258;   // Rain amount per flip count
+const imgFilePath = '/opt/iobroker/iobroker-data/include/img/';   // Adjust the imgFilePath to your environment
 
 /* uncomment this
 const measurement02 = new Map([
@@ -59,9 +62,16 @@ let propertyArray = [
 */
 let propertyArray = [{ id: maDeviceID, name: 'Regensensor', data: measurement08 }];
 
-/* This code block is creating a string called `deviceIdString` which will contain all the device IDs from the
-`propertyArray`. It also creates a `propertiesById` map to store the properties of each device ID. 
-The deviceidString is needed for the API query to retrieve the data for all sensors stored in the propertyArray. */
+// Auxiliary function for checkForRain().
+// Check if two Dates (timestamps) are on the same Day
+const datesAreOnSameDay = (first: Date, second: Date) =>
+  first.getFullYear() === second.getFullYear() &&
+  first.getMonth() === second.getMonth() &&
+  first.getDate() === second.getDate();
+
+// This code block is creating a string called `deviceIdString` which will contain all the device IDs from the
+// `propertyArray`. It also creates a `propertiesById` map to store the properties of each device ID. 
+// The deviceidString is needed for the API query to retrieve the data for all sensors stored in the propertyArray.
 let deviceIdString = '';
 var propertiesById = new Map();
 propertyArray.forEach(function (item) {
@@ -73,9 +83,9 @@ deviceIdString = deviceIdString.substring(0, deviceIdString.length - 1);  // Rem
 let body = 'deviceids=' + deviceIdString;
 if (phoneId) { body += '&phoneid=' + phoneId; }
 
-/* This code block is iterating over each item in the `propertyArray` array. For each item, it then iterates over the
-`data` property of that item. If the corresponding objects do not yet exist in the iobroker object database, 
-they will be created.*/
+// This code block is iterating over each item in the `propertyArray` array. For each item, it then iterates over the
+// `data` property of that item. If the corresponding objects do not yet exist in the iobroker object database, 
+// they will be created.
 propertyArray.forEach(function (item) {
   item.data.forEach(function (subitem: any, key) {
     let id = mobileAlertsPath + item.id + '.' + key;
@@ -134,50 +144,65 @@ function checkDefined(value: number | boolean, dataType: string) {
 }
 
 /**
- * The function `checkForRain` checks if it is raining based on the flip count value (rf) and updates 
- * the state accordingly.
- * @param {string} deviceid - A string representing the unique identifier of the device.
- * @param {number} rfVal - The parameter `rfVal` represents the current flip count value.
+ * The function `checkForRain` checks if it is currently raining based on the rainfall values received from a device, and
+ * updates the state accordingly.
+ * @param {string} deviceid - The `deviceid` parameter is a string that represents the unique identifier of a device. It is
+ * used to construct the base path for accessing different properties of the device.
+ * @param {number} rfVal - The `rfVal` parameter represents the current flip counter value, which is used to determine if
+ * it is raining or not.
+ * @param {number} tsVal - The `tsVal` parameter represents a timestamp value. It is used to determine if a day change has
+ * occurred.
  * @returns The function does not explicitly return a value.
  */
-function checkForRain(deviceid: string, rfVal: number) {
+function checkForRain(deviceid: string, rfVal: number, tsVal: number) {
   const basePath = mobileAlertsPath + deviceid;
   const lrfID = basePath + '.lrf';
   const rbID = basePath + '.rb';
   const rsdID = basePath + '.rsd';
-  const rr: number = 0.258;
+  const rstID = basePath + '.rst';
 
-  if (!rfVal) {   // If rfVal = 0, this value was reset and it doesn't rain.
+  // If the script has just been restarted, set the saved flip count value equal to the submitted one.
+  // If rfVal = 0, this value was reset and it doesn't rain.
+  if (isNewStarted || !rfVal) {
     setState(lrfID, rfVal, true);
+    isNewStarted = false;
+    log('maGetData: The script was just restarted or rf was reset to zero ');
+    log('maGetData: -> once not check for rain');
     return;
   }
 
   let itIsRaining = getState(rbID).val;
   let lrfVal = getState(lrfID).val;
   let rfDiff = rfVal - lrfVal;  // no rain if result is zero.
-  let r = rfDiff * rr;          // Rainfall amount since last data request.
 
   if (rfDiff) {   // if the flipcounter is not equal to the stored counter, it must be raining.
     log('It\'s raining!');
     rainTrueResetCounter = 0;
+    let rasd = rfDiff * rafc;          // Rainfall amount since last data request.
+    let rainTotal = getState(rstID).val;
+    // If a day change has occurred, then do not save the total but the current rain value.
+    //rainTotal = (datesAreOnSameDay(new Date(), new Date(tsVal*1000))) ? rainTotal + rasd : rasd;
+    rainTotal = (1) ? rainTotal + rasd : rasd;
     setState(lrfID, rfVal, true);
-    setState(rsdID, r, true);
-    itIsRaining === false && setState(rbID, true, true);   // setState if first expression is true 
-    sendPoMessage({
-      message: 'Es ist am regnen...', title: 'Mobile Alerts', sound: 'pushover',
-      file: imgFilePath + 'umbrella-64.png'
-    });
-  } else if (itIsRaining === true) {
+    setState(rsdID, rasd, true);
+    setState(rstID, rainTotal, true);
+    if (!itIsRaining) {
+      setState(rbID, true, true);   // setState if first expression is true 
+      //   sendPoMessage({
+      //     message: 'Es ist am regnen...', title: 'Mobile Alerts', sound: 'pushover',
+      //     file: imgFilePath + 'umbrella-64.png'
+      //   });
+    }
+  } else if (itIsRaining) {
     ++rainTrueResetCounter;
     log('Tests for rain end (' + rainTrueResetCounter + '/' + maxRainTrueResetCounter + ')');
     if (rainTrueResetCounter >= maxRainTrueResetCounter) {
       log('It no longer rains');
-      rainTrueResetCounter = 0;
       setState(rbID, false, true);
-      sendPoMessage({
-        message: 'Es regnet nicht mehr...', title: 'Mobile Alerts', sound: 'pushover',
-        file: imgFilePath + 'sunshine-64.png'
-      });
+      //   sendPoMessage({
+      //     message: 'Es regnet nicht mehr...', title: 'Mobile Alerts', sound: 'pushover',
+      //     file: imgFilePath + 'sunshine-64.png'
+      //   });
     }
   }
 }
@@ -191,13 +216,14 @@ async function getData() {
   // log(data);
   if (data) {
     const obj = JSON.parse(data);
-    if (obj.success == true) {
+    if (obj.success === true) {
       obj.devices.forEach(function (item: any) {
         let props = propertiesById.get(item.deviceid);
         for (var [key, subitem] of props.data) {
           let value = checkDefined(item.measurement[key], subitem.type);
           subitem.maItem === true && setState(mobileAlertsPath + item.deviceid + "." + key, value, true);
-          key === 'rf' && checkForRain(item.deviceid, item.measurement[key]); // check flipcounter if key is = 'rf'
+          // check for rain if key is = 'rf'
+          key === 'rf' && checkForRain(item.deviceid, item.measurement[key], item.measurement['ts']);
         }
       });
     } else {
