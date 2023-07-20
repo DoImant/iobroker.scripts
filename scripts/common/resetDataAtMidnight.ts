@@ -43,7 +43,8 @@ function resetSunRiseInfo(): void {
 //
 function resetRainfall() {
   $('state[id=0_userdata.0.mobileAlerts.Devices.*.rst]').each((id: string) => {
-    // reset rsd value only when it is not raining
+    // reset rst value only when it is not raining
+    // rb is "it's raining true or false"
     !getState(id.replace(/rst$/g, 'rb')).val && setState(id, 0, true);
   });
 }

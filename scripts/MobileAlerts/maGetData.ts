@@ -181,8 +181,8 @@ function checkForRain(deviceid: string, rfVal: number, tsVal: number) {
     let rasd = rfDiff * rafc;          // Rainfall amount since last data request.
     let rainTotal = getState(rstID).val;
     // If a day change has occurred, then do not save the total but the current rain value.
-    //rainTotal = (datesAreOnSameDay(new Date(), new Date(tsVal*1000))) ? rainTotal + rasd : rasd;
-    rainTotal = (1) ? rainTotal + rasd : rasd;
+    rainTotal = (datesAreOnSameDay(new Date(), new Date(tsVal*1000))) ? rainTotal + rasd : rasd;
+    //rainTotal = (1) ? rainTotal + rasd : rasd;
     setState(lrfID, rfVal, true);
     setState(rsdID, rasd, true);
     setState(rstID, rainTotal, true);

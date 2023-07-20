@@ -15,13 +15,13 @@ function switchOff() {
   exec('echo 0 | sudo tee /sys/class/leds/PWR/brightness');
 }
 
-async function checkLedState() : Promise<void> {
+async function checkLedState(): Promise<void> {
   const res = await getStateAsync('0_userdata.0.Server.powerLed');
   res.val === 0 ? switchOff() : switchOn();
 }
 
-// Check beim Start des Systems
+// Check at system startup
 checkLedState();
 
-// Check bei Änderung des Objekts
+// Check when the object is changed
 on({ id: '0_userdata.0.Server.powerLed', change: 'any' }, checkLedState);
