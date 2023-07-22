@@ -218,7 +218,7 @@ function checkForRain(mad: MobileAlertsData,
     setState(rsdID, rasd, true);
     setState(rstID, rainTotal, true);
     if (!itIsRaining) {
-      setState(rbID, true, true);   // setState if first expression is true 
+      setState(rbID, true, true);   // set rb = true (it is raining)
       sendPoMessage({
         message: 'Es ist am regnen...', title: 'Mobile Alerts', sound: 'pushover',
         file: mad.imgFilePath + 'umbrella-64.png'
@@ -226,7 +226,7 @@ function checkForRain(mad: MobileAlertsData,
     }
   } else if (itIsRaining) {
     ++precip.rainTrueResetCounter;
-    log('Tests for rain end (' + precip.rainTrueResetCounter + '/' + precip.maxRainTrueResetCounter + ')');
+    log(`Tests for rain end (${precip.rainTrueResetCounter}/${precip.maxRainTrueResetCounter})`);
     if (precip.rainTrueResetCounter >= precip.maxRainTrueResetCounter) {
       log('It no longer rains');
       setState(rbID, false, true);
