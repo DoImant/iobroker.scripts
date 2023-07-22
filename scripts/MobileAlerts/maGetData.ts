@@ -198,7 +198,6 @@ function checkForRain(mad: MobileAlertsData,
     setState(lrfID, rfVal, true);
     precip.isNewStarted = false;
     log('maGetData: The script was just restarted or rf was reset to zero ');
-    log('maGetData: -> once not check for rain');
     return;
   }
 
@@ -206,27 +205,27 @@ function checkForRain(mad: MobileAlertsData,
   let lrfVal = getState(lrfID).val;
   let rfDiff = rfVal - lrfVal;   // no rain if result is zero.
 
-  if (rfDiff) {   // if the flipcounter is not equal to the stored counter, it must be raining.
-    log('It\'s raining!');
+  if (rfDiff > 0) {   // if the flipcounter is not equal to the stored counter, it must be raining.
     precip.rainTrueResetCounter = 0;
     let rasd = rfDiff * precip.rafc;   // Rainfall amount since last data request.
     let rainTotal = getState(rstID).val;
     // If a day change has occurred, then do not save the total but the current rain value.
     rainTotal = (datesAreOnSameDay(new Date(), new Date(tsVal * 1000))) ? rainTotal + rasd : rasd;
     // rainTotal = (1) ? rainTotal + rasd : rasd;
-    setState(lrfID, rfVal, true);
-    setState(rsdID, rasd, true);
-    setState(rstID, rainTotal, true);
+    setState(lrfID, rfVal, true);       // save actual flip counter value
+    setState(rsdID, rasd, true);        // save rainamount since last data request
+    setState(rstID, rainTotal, true);   // save total rain amount per day 
     if (!itIsRaining) {
-      setState(rbID, true, true);   // setState if first expression is true 
+      setState(rbID, true, true);       // set rb = true (it is raining)
       sendPoMessage({
         message: 'Es ist am regnen...', title: 'Mobile Alerts', sound: 'pushover',
         file: mad.imgFilePath + 'umbrella-64.png'
       });
     }
+    log('It\'s raining!');
   } else if (itIsRaining) {
     ++precip.rainTrueResetCounter;
-    log('Tests for rain end (' + precip.rainTrueResetCounter + '/' + precip.maxRainTrueResetCounter + ')');
+    log(`Tests for rain end (${precip.rainTrueResetCounter}/${precip.maxRainTrueResetCounter})`);
     if (precip.rainTrueResetCounter >= precip.maxRainTrueResetCounter) {
       log('It no longer rains');
       setState(rbID, false, true);
