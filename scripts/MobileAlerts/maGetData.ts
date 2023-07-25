@@ -37,7 +37,7 @@ interface Precipitation {
   isNewStarted: boolean;
 }
 
-const maData: MobileAlertsData = {
+const MA_DATA: MobileAlertsData = {
   path: '0_userdata.0.mobileAlerts.Devices.',
   apiURL: 'https://www.data199.com/api/pv1/device/lastmeasurement',
   phoneID: '',
@@ -45,7 +45,7 @@ const maData: MobileAlertsData = {
   imgFilePath: '/opt/iobroker/iobroker-data/include/img/'
 };
 
-const maPrecip: Precipitation = {
+const MA_PRECIP: Precipitation = {
   rafc: 0.258,
   // Maximum counter value
   // With a query interval of the API of two minutes, the reset occurs after maxRainTrueResetCounter * 2 minutes  
@@ -101,16 +101,16 @@ propertyArray.forEach(function (item) {
   propertiesById.set(item.id, item);
   deviceIdString += item.id + ',';
 })
-deviceIdString = deviceIdString.substring(0, deviceIdString.length - 1);  // Remove comma
-maData.apiBody = (!maData.phoneID) ?
-  `deviceids=${deviceIdString}` : `deviceids=${deviceIdString}\&phoneid=${maData.phoneID}`;
+deviceIdString = deviceIdString.replace(/,$/, '');   // remove trailing comma
+MA_DATA.apiBody = (!MA_DATA.phoneID) ?
+  `deviceids=${deviceIdString}` : `deviceids=${deviceIdString}\&phoneid=${MA_DATA.phoneID}`;
 
 // This code block is iterating over each item in the `propertyArray` array. For each item, it then iterates over the
 // `data` property of that item. If the corresponding objects do not yet exist in the iobroker object database, 
 // they will be created.
 propertyArray.forEach(function (item) {
   item.data.forEach(function (subitem: any, key) {
-    let id = `${maData.path}${item.id}.${key}`;
+    let id = `${MA_DATA.path}${item.id}.${key}`;
     if (!existsObject(id)) {
       createState(
         id,
@@ -242,7 +242,7 @@ function checkForRain(mad: MobileAlertsData,
  * the data in the ioBroker object database. If it is data from a rain sensor, it will check if it is raining.
  */
 async function getData() {
-  const data = await doPostRequest(maData.apiURL, maData.apiBody);
+  const data = await doPostRequest(MA_DATA.apiURL, MA_DATA.apiBody);
   // log(data);
   if (data) {
     const obj = JSON.parse(data);
@@ -251,9 +251,10 @@ async function getData() {
         let props = propertiesById.get(item.deviceid);
         for (var [key, subitem] of props.data) {
           let value = checkDefined(item.measurement[key], subitem.type);
-          subitem.maItem === true && setState(`${maData.path}${item.deviceid}.${key}`, value, true);
+          subitem.maItem === true && setState(`${MA_DATA.path}${item.deviceid}.${key}`, value, true);
           // check for rain if key is = 'rf'
-          key === 'rf' && checkForRain(maData, maPrecip, item.deviceid, item.measurement[key], item.measurement['ts']);
+          key === 'rf' &&
+            checkForRain(MA_DATA, MA_PRECIP, item.deviceid, item.measurement[key], item.measurement['ts']);
         }
       });
     } else {

@@ -1,14 +1,13 @@
 //
-// Berechnung der Luftdrucks auf Meereshöhe (NN) mit Hilfe der 
-// barometrischen Höhenformel
+// Calculation of air pressure at sea level (NN) using the barometric altitude formula
 //
-// 25.05.23
+// 25.05.23 initial Version
 //
 
 ///////////////////////////////////////////////
-// Konstanten
+// Constants
 ///////////////////////////////////////////////
-const HOEHE = 132;     // Höhe des Sensors in Meter über NN
+const HOEHE = 132;     // Height of the sensor in meters above sea level
 const TEMPERATURE_ID = 'alias.0.klima.garten.temperatur';
 const AIRPRESSUREQFE_ID = 'alias.0.klima.garten.luftdruck';
 const AIRPRESSUREQFF_ID = '0_userdata.0.Var.luftdruck.QFF';
@@ -32,7 +31,6 @@ schedule('*/15 * * * *', function () {
   let temperatureK = getState(TEMPERATURE_ID).val + KELVIN;
   let apQFF = getState(AIRPRESSUREQFE_ID).val * Math.pow((temperatureK / (temperatureK + HT_GRADIENT)), EXPONENT_N);
   apQFF = roundTo(apQFF, DEZIMALS);
-  //log('Luftdruck: ' + apQFF);
   setState(AIRPRESSUREQFF_ID, apQFF, true);
 });
 

@@ -1,13 +1,13 @@
 //
-// Berechnung der Luftdruckdifferenz von einer und drei Stunden
+// Calculation of the air pressure difference of one and three hours
 //
-// 25.05.23
+// 25.05.23 initial Version
 //
 
-const numSelect: number = 3;
+const NUM_SELECT: number = 3;
 
 //
-// Differenz von einer Stunde errechnen und speichern
+// Calculate and save difference of one hour
 //
 on({ id: '0_userdata.0.Var.luftdruck.QFF', change: 'any' }, function (obj) {
   let tsFrom = new Date(obj.state.ts);
@@ -41,14 +41,13 @@ on({ id: '0_userdata.0.Var.luftdruck.QFF', change: 'any' }, function (obj) {
 });
 
 //
-// Wenn ein neuer Wert (Stundendifferenz) gespeichert wurde, selektiere die 
-// letzten drei Differenzwerte und addiere sie
+// When a new value (hour difference) has been stored, select the last three difference values and add them up
 //
 on({ id: '0_userdata.0.Var.luftdruck.diff_1std', change: 'any' }, function (obj) {
   sendTo('sql.0', 'getHistory', {
     id: obj.id,
     options: {
-      limit: numSelect,
+      limit: NUM_SELECT,
       round: 2,
       ignoreNull: true,
       returnNewestEntries: true,
@@ -61,7 +60,7 @@ function doResult(rs: { result: string | any[]; }) {
   let sum: number = 0;
   if (!rs.result[0]) {
     log("No Result...", 'warn');
-  } else if (rs.result.length === numSelect) { // Calculate the sum only if the required number of records could be loaded.
+  } else if (rs.result.length === NUM_SELECT) { // Calculate the sum only if the required number of records could be loaded.
     for (let resData of rs.result) {
       //log(' Wert: ' + resData.val);
       sum += resData.val
