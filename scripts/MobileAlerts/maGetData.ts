@@ -12,6 +12,7 @@
 // 08.07.2023 Removed the sendPoMessage function and moved it to a typescript file in the global scope of ioBroker-JS.
 // 09.07.2023 Revised the way the daily rainfall amount is determined and stored.
 // 20.07.2023 Different handling of global data
+// 27.07.2023 The rain end detection (maxRainTrueResetCounter) set high fom 5 to 10
 //
 // @ts-ignore
 const fetch = require('node-fetch');
@@ -49,7 +50,7 @@ const MA_PRECIP: Precipitation = {
   rafc: 0.258,
   // Maximum counter value
   // With a query interval of the API of two minutes, the reset occurs after maxRainTrueResetCounter * 2 minutes  
-  maxRainTrueResetCounter: 5,
+  maxRainTrueResetCounter: 10,
   // If the rain flag (rb) = true but the flip counter value does not change anymore, this counter is 
   // incremented to the maximum value before the rain flag is set to false again. 
   rainTrueResetCounter: 0,
@@ -217,12 +218,12 @@ function checkForRain(mad: MobileAlertsData,
     setState(rstID, rainTotal, true);   // save total rain amount per day 
     if (!itIsRaining) {
       setState(rbID, true, true);       // set rb = true (it is raining)
+      log('It\'s raining!');
       sendPoMessage({
         message: 'Es ist am regnen...', title: 'Mobile Alerts', sound: 'pushover',
         file: mad.imgFilePath + 'umbrella-64.png'
       });
     }
-    log('It\'s raining!');
   } else if (itIsRaining) {
     ++precip.rainTrueResetCounter;
     log(`Tests for rain end (${precip.rainTrueResetCounter}/${precip.maxRainTrueResetCounter})`);
