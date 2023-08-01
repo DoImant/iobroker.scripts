@@ -85,10 +85,14 @@ let propertyArray = [{ id: maDeviceID, name: 'Regensensor', data: measurement08 
 
 // Auxiliary function for checkForRain().
 // Check if two Dates (timestamps) are on the same Day
-const datesAreOnSameDay = (first: Date, second: Date) =>
-  first.getFullYear() === second.getFullYear() &&
-  first.getMonth() === second.getMonth() &&
-  first.getDate() === second.getDate();
+function datesAreOnSameDay(first: Date, second: Date): boolean {
+  const result = first.getFullYear() === second.getFullYear() &&
+    first.getMonth() === second.getMonth() &&
+    first.getDate() === second.getDate();
+
+  log(first.toDateString() + " / " + second.toDateString() + " " + result);
+  return result;
+}
 
 // This code block is creating a string called `deviceIdString` which will contain all the device IDs from the
 // `propertyArray`. It also creates a `propertiesById` map to store the properties of each device ID. 
@@ -205,14 +209,14 @@ function checkForRain(mad: MobileAlertsData,
   let itIsRaining = getState(rbID).val;
   let lrfVal = getState(lrfID).val;
   let rfDiff = rfVal - lrfVal;   // no rain if result is zero.
-
   if (rfDiff > 0) {   // if the flipcounter is not equal to the stored counter, it must be raining.
     precip.rainTrueResetCounter = 0;
     let rasd = rfDiff * precip.rafc;   // Rainfall amount since last data request.
-    let rainTotal = getState(rstID).val;
+    //let rainTotal = getState(rstID).val;
+    let rainTotal = getState(rstID);
     // If a day change has occurred, then do not save the total but the current rain value.
-    rainTotal = (datesAreOnSameDay(new Date(), new Date(tsVal * 1000))) ? rainTotal + rasd : rasd;
-    // rainTotal = (1) ? rainTotal + rasd : rasd;
+    rainTotal.val = (datesAreOnSameDay(new Date(rainTotal.ts || 0), new Date(tsVal * 1000)))
+      ? rainTotal.val + rasd : rasd;
     setState(lrfID, rfVal, true);       // save actual flip counter value
     setState(rsdID, rasd, true);        // save rainamount since last data request
     setState(rstID, rainTotal, true);   // save total rain amount per day 
