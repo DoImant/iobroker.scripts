@@ -197,6 +197,8 @@ function checkForRain(mad: MobileAlertsData,
   const rsdID = `${basePath}.rsd`;
   const rstID = `${basePath}.rst`;
 
+  const dateTsVal = new Date(tsVal * 1000);
+
   // If the script has just been restarted, set the saved flip count value equal to the submitted one.
   // If rfVal = 0, this value was reset and it doesn't rain.
   if (precip.isNewStarted || !rfVal) {
@@ -212,11 +214,9 @@ function checkForRain(mad: MobileAlertsData,
   if (rfDiff > 0) {   // if the flipcounter is not equal to the stored counter, it must be raining.
     precip.rainTrueResetCounter = 0;
     let rasd = rfDiff * precip.rafc;   // Rainfall amount since last data request.
-    //let rainTotal = getState(rstID).val;
     let rainTotal = getState(rstID);
     // If a day change has occurred, then do not save the total but the current rain value.
-    rainTotal.val = (datesAreOnSameDay(new Date(rainTotal.ts || 0), new Date(tsVal * 1000)))
-      ? rainTotal.val + rasd : rasd;
+    rainTotal.val = (datesAreOnSameDay(new Date(rainTotal.ts || 0), dateTsVal))  ? rainTotal.val + rasd : rasd;
     setState(lrfID, rfVal, true);       // save actual flip counter value
     setState(rsdID, rasd, true);        // save rainamount since last data request
     setState(rstID, rainTotal, true);   // save total rain amount per day 
@@ -231,8 +231,14 @@ function checkForRain(mad: MobileAlertsData,
   } else if (itIsRaining) {
     ++precip.rainTrueResetCounter;
     log(`Tests for rain end (${precip.rainTrueResetCounter}/${precip.maxRainTrueResetCounter})`);
+    // If a day change occurred, then set rainsumtotal (rst) to 0
+    if (!datesAreOnSameDay(new Date(), dateTsVal)) {
+      setState(rstID, 0, true);
+      log('Daychange: Reset Rain Sum Total');
+    }
     if (precip.rainTrueResetCounter >= precip.maxRainTrueResetCounter) {
       log('It no longer rains');
+      setState(rsdID, 0, true);
       setState(rbID, false, true);
       sendPoMessage({
         message: 'Es regnet nicht mehr...', title: 'Mobile Alerts', sound: 'pushover',
