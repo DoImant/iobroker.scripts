@@ -119,4 +119,3 @@ schedule('*/10 * * * *', () => {
   // Determine all temperature sensor IDs    
   $('state[id=0_userdata.0.sensEgg.Devices.*.ntcT]').each(calcDewPoint);
 });
-
