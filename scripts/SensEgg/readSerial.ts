@@ -1,14 +1,15 @@
 //
-// Einlesen von SensEgg Sensordaten Daten über die serielle Schnittstelle, parsen des JSON Strings und 
-// abspeichern der Daten in den entsprechenden Datenpunkten.
+// Reading in SensEgg sensor data via the serial interface, parsing the JSON string and 
+// storing the data in the corresponding data points.
 //
-// 03.06.2023 Initiale Version
-// 18.06.2023 An neue Datenpunktstruktur für die SensEgg Sensoren angepasst
+// 03.06.2023 Initial Version
+// 18.06.2023 Adapted to new data point structure for SensEgg sensors
+// 17.09.2023 Only predefined IDs are permitted for data transfer.
 //
-
 // Ignore require error. Do NOT convert to import (it does not run in ioBroker)
 // @ts-ignore
 const { SerialPort, ReadlineParser } = require('serialport')
+const idGroup = [201, 202, 203]; // Group of valid device IDs
 
 // Create a port
 const port = new SerialPort({
@@ -56,11 +57,14 @@ function parseData(receivedData: string): void {
   //const receivedData = '{"SENSOR_ID":201,"data":{"BME_T":"12.3","BME_H":"55.7","BME_P":"1019","SNE_BATT":"2.987","NTC_T":"22.1"}}';
   //console.log(receivedData);
   let sensorData = JSON.parse(receivedData);
-
-  for (let property in sensorData.data) {
-    let id = idFirstPart.concat(sensorData.SENSOR_ID, idSecondPart[property]);
-    let val = Number(sensorData.data[property]);
-    // console.log(id + ' ' + val);
-    setState(id, val, true);
+  if (idGroup.includes(sensorData.SENSOR_ID)) {
+    for (let property in sensorData.data) {
+      let id = idFirstPart.concat(sensorData.SENSOR_ID, idSecondPart[property]);
+      let val = Number(sensorData.data[property]);
+      // console.log(id + ' ' + val);
+      setState(id, val, true);
+    }
+  } else {
+    console.log('ID ' + sensorData.SENSOR_ID  + ' is not permitted');
   }
 }
