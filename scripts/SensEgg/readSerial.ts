@@ -5,11 +5,19 @@
 // 03.06.2023 Initial Version
 // 18.06.2023 Adapted to new data point structure for SensEgg sensors
 // 17.09.2023 Only predefined IDs are permitted for data transfer.
+// 19.09.2023 Interface DataItems added
 //
 // Ignore require error. Do NOT convert to import (it does not run in ioBroker)
 // @ts-ignore
 const { SerialPort, ReadlineParser } = require('serialport')
 const idGroup = [201, 202, 203]; // Group of valid device IDs
+interface DataItems {
+  BME_T: string;
+  BME_H: string;
+  BME_P: string;
+  SNE_BATT: string;
+  NTC_T: string;
+}
 
 // Create a port
 const port = new SerialPort({
@@ -46,7 +54,7 @@ onStop(function () {
 // Parse string and change received data to an object.
 function parseData(receivedData: string): void {
   const idFirstPart = '0_userdata.0.sensEgg.Devices.';
-  const idSecondPart: any = {
+  const idSecondPart: DataItems = {
     BME_T: '.T',
     BME_H: '.raH',
     BME_P: '.aP',
@@ -65,6 +73,6 @@ function parseData(receivedData: string): void {
       setState(id, val, true);
     }
   } else {
-    console.log('ID ' + sensorData.SENSOR_ID  + ' is not permitted');
+    console.log('ID ' + sensorData.SENSOR_ID + ' is not permitted');
   }
 }
